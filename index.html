@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<style>
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#app {
+  display: flex;
+}
+aside {
+  width: 300px;
+  height: 100%;
+  background-color: #f1f1f1;
+  overflow: auto;
+}
+main {
+  flex: 1;
+  height: 100%;
+  overflow: auto;
+}
+
+aside > ul > li {
+  list-style: none;
+}
+aside li {
+  padding: 10px 0;
+}
+aside li li {
+  cursor: pointer;
+}
+aside li .item-name address {
+  color: #999;
+  display: inline;
+  margin-left: .5em;
+}
+
+.home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
+.page {
+  padding: 90px 40px;
+}
+.value {
+  white-space: pre;
+}
+.page section {
+  display: flex;
+  padding: 20px;
+}
+.page section:nth-child(odd) {
+  background: #f1f1f1;
+}
+.page section .label {
+  width: 150px;
+}
+</style>
+
+<title>__TITLE__</title>
+
+<div id="app">
+  <aside>
+    <ul>
+      <li v-for="group in data" :key="group.name">
+        <div class="group-name">{{group.name}}</div>
+        <ul v-if="group.items && group.items.length">
+          <li v-for="item in group.items" :key="item.name">
+            <div class="item-name" @click="setItem(item, group)">
+              <span>{{item.name}}</span>
+              <address>{{item.path}}</address>
+            </div>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </aside>
+  <main>
+    <section class="home" v-if="!current">
+      <section>
+        <h1>__TITLE__</h1>
+        <p>__DESCRIPTION__</p>
+      </section>
+    </section>
+    <section class="page" v-if="current">
+      <h1 class="name">{{current.name}}</h1>
+      <div class="description">{{current.description}}</div>
+      <section class="path">
+        <div class="label">PATH</div>
+        <div class="value">{{baseUrl}}{{current.path}}</div>
+      </section>
+      <section class="method">
+        <div class="label">METHOD</div>
+        <div class="value">{{current.method}}</div>
+      </section>
+      <section class="request">
+        <div class="label">REQUEST</div>
+        <div class="value">{{stringify(current.request)}}</div>
+      </section>
+      <section class="success">
+        <div class="label">SUCCESS</div>
+        <div class="value">{{stringify(current.response)}}</div>
+      </section>
+      <section class="error">
+        <div class="label">ERROR</div>
+        <div class="value">
+          <div>{{stringify(current.error)}}</div>
+          <div v-if="current.errors"><strong>code:</strong></div>
+          <div v-if="current.errors">{{stringify(current.errors)}}</div>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script src="https://unpkg.com/vue"></script>
+<script>
+const DATA = __DATA__
+const vm = new Vue({
+  el: '#app',
+  data: {
+    current: null,
+    data: DATA.data,
+    baseUrl: DATA.baseUrl,
+  },
+  methods: {
+    stringify(json) {
+      let text = JSON.stringify(json, null, 4)
+      text = text.replace(/\\"/g, '____')
+      text = text.replace(/"/g, '')
+      text = text.replace(/____/g, '"')
+      return text
+    },
+    setItem(item, group) {
+      this.current = item
+      window.location.hash = '#' + group.name + '/' + item.name
+    }
+  },
+})
+
+function find(chain) {
+  const { data } = DATA
+  if (chain.indexOf('/') > 0) {
+    const [groupName, itemName] = chain.split('/')
+    const group = data.find(item => item.name === decodeURIComponent(groupName))
+    if (!group) {
+      return
+    }
+    const item = group.items.find(item => item.name === decodeURIComponent(itemName))
+    return item
+  }
+  else {
+    for (let i = 0, len = data.length; i < len; i ++) {
+      const group = data[i]
+      const { items } = group
+      const item = items.find(item => item.name === chain)
+      if (item) {
+        return item
+      }
+    }
+  }
+}
+
+window.addEventListener('load', () => {
+  console.log(DATA)
+
+  const { hash } = window.location
+  if (!hash) {
+    return
+  }
+
+  const name = hash.substr(1)
+  const item = find(name)
+  if (!item) {
+    return
+  }
+
+  vm.current = item
+})
+</script>

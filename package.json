@@ -1,0 +1,16 @@
+{
+  "name": "tyshemo-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node example"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "ts-fns": "^0.1.1",
+    "tyshemo": "^2.8.4"
+  }
+}
