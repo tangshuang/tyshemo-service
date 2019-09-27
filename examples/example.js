@@ -1,30 +1,15 @@
-const { Dict } = require('tyshemo')
-const Service = require('./service')
+const Service = require('../index')
+const { RequestType, ResponseType } = require('./types')
 
-const request = new Dict({
-  name: String,
-  age: Number,
-})
-request.__comments = {
+RequestType.__comments = {
   'name': 'comment for name',
-  'age': 'comment for age',
+  'age': [
+    'comment for age',
+    'the second line comment',
+  ],
 }
 
-const response = new Dict({
-  name: String,
-  age: Number,
-  body: {
-    head: Boolean,
-    foot: Boolean,
-  },
-  hands: [
-    {
-      name: String,
-      size: Number,
-    },
-  ],
-})
-response.__comments = {
+ResponseType.__comments = {
   'body.head': 'comment for body.head',
   'hands': 'comment for hands',
   'hands[0]': 'comment for hands[0]',
@@ -41,8 +26,7 @@ const service = new Service({
   errorWrapper: (error) => {
     return {
       code: 10000,
-      error: msg,
-      ...error,
+      error,
     }
   },
   globalErrors: {
@@ -55,14 +39,15 @@ const service = new Service({
       items: [
         {
           name: 'Person',
-          method: 'post',
+          method: 'get',
           path: '/person/:id',
-          request,
-          response,
+          request: RequestType,
+          response: ResponseType,
         },
       ],
     },
   ],
 })
 
-service.docup()
+// service.mock()
+service.doc()

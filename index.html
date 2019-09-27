@@ -48,9 +48,6 @@ aside li .item-name address {
 .page {
   padding: 90px 40px;
 }
-.value {
-  white-space: pre;
-}
 .page section {
   display: flex;
   padding: 20px;
@@ -60,6 +57,19 @@ aside li .item-name address {
 }
 .page section .label {
   width: 150px;
+}
+.page section .value .text-line {
+  white-space: pre;
+}
+.page section .value .text-comment {
+  color: #aaa;
+}
+.page section .value .text-normal {
+  margin-bottom: 8px;
+}
+.page section .value .extra {
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 </style>
 
@@ -101,25 +111,33 @@ aside li .item-name address {
       </section>
       <section class="request">
         <div class="label">REQUEST</div>
-        <div class="value">{{stringify(current.request)}}</div>
+        <div class="value">
+          <div class="text-line" v-for="item in split(current.request)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
+        </div>
       </section>
       <section class="success">
         <div class="label">SUCCESS</div>
-        <div class="value">{{stringify(current.response)}}</div>
+        <div class="value">
+          <div class="text-line" v-for="item in split(current.response)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
+        </div>
       </section>
       <section class="error">
         <div class="label">ERROR</div>
         <div class="value">
-          <div>{{stringify(current.error)}}</div>
-          <div v-if="current.errors"><strong>code:</strong></div>
-          <div v-if="current.errors">{{stringify(current.errors)}}</div>
+          <div>
+            <div class="text-line" v-for="item in split(current.error)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
+          </div>
+          <div class="extra" v-if="current.errors"><strong>code:</strong></div>
+          <div v-if="current.errors">
+            <div class="text-line" v-for="item in split(current.errors)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
+          </div>
         </div>
       </section>
     </section>
   </main>
 </div>
 
-<script src="https://unpkg.com/vue"></script>
+<script src="/vue.js"></script>
 <script>
 const DATA = __DATA__
 const vm = new Vue({
@@ -130,12 +148,17 @@ const vm = new Vue({
     baseUrl: DATA.baseUrl,
   },
   methods: {
-    stringify(json) {
-      let text = JSON.stringify(json, null, 4)
-      text = text.replace(/\\"/g, '____')
-      text = text.replace(/"/g, '')
-      text = text.replace(/____/g, '"')
-      return text
+    split(str) {
+      const lines = str.split('\n')
+      const items = lines.map((line) => {
+        const text = line.trim()
+        const isComment = text.indexOf('//') === 0
+        return {
+          text: line,
+          is: isComment,
+        }
+      })
+      return items
     },
     setItem(item, group) {
       this.current = item
@@ -168,8 +191,6 @@ function find(chain) {
 }
 
 window.addEventListener('load', () => {
-  console.log(DATA)
-
   const { hash } = window.location
   if (!hash) {
     return
