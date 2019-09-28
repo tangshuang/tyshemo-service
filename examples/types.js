@@ -1,8 +1,8 @@
-const { Dict, ifexist, String8, Int } = require('tyshemo')
+const { Dict, ifexist, String8, Int, Numeric } = require('tyshemo')
 
 const RequestType = new Dict({
   name: String8,
-  age: Int,
+  age: Numeric,
 })
 
 const ResponseType = new Dict({
@@ -20,7 +20,14 @@ const ResponseType = new Dict({
   ],
 })
 
+const DeskType = new Dict({
+  size: Number,
+  height: Number,
+  num: String8,
+})
+
 module.exports = {
   RequestType,
   ResponseType,
+  DeskType,
 }

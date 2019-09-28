@@ -72,6 +72,7 @@ To serve up, the most important information to pick from.
     items: [ // api item level
       {
         name: 'api name',
+        description: 'api description',
         method: 'get', // lowercase, will be used by express to route
         path: '/path/:id', // concat with baseUrl, will be used by express to serve up mock server, show in doc page
         request: RequestType, // data type container which created by TySheMo

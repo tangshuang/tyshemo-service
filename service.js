@@ -31,7 +31,7 @@ class Service {
 
     items.forEach((item) => {
       const { method, path, request, response } = item
-      const url = baseUrl + path
+      const url = (item.baseUrl !== undefined ? item.baseUrl : baseUrl) + path
 
       app[method](url, (req, res) => {
         // check req data
@@ -88,6 +88,7 @@ class Service {
 
           return {
             ...item,
+            path: (item.baseUrl !== undefined ? item.baseUrl : baseUrl) + item.path,
             request: requestText,
             response: responseText,
             error: errorText,
@@ -105,11 +106,7 @@ class Service {
         let text = buffer.toString()
         text = text.replace(/__TITLE__/g, title)
         text = text.replace(/__DESCRIPTION__/g, description)
-        const output = {
-          baseUrl,
-          data,
-        }
-        const html = text.replace('__DATA__', JSON.stringify(output, null, 4))
+        const html = text.replace('__DATA__', JSON.stringify(data))
         res.type('html')
         res.send(html)
       })

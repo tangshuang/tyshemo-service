@@ -11,10 +11,11 @@ html, body, #app {
   display: flex;
 }
 aside {
-  width: 300px;
   height: 100%;
   background-color: #f1f1f1;
   overflow: auto;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 main {
   flex: 1;
@@ -22,19 +23,30 @@ main {
   overflow: auto;
 }
 
+aside > ul {
+  margin-left: 0;
+  padding-left: 0;
+}
 aside > ul > li {
   list-style: none;
 }
 aside li {
-  padding: 10px 0;
+  margin: 10px 0;
 }
 aside li li {
   cursor: pointer;
 }
+aside li .item-name {
+  display: flex;
+  align-items: center;
+}
 aside li .item-name address {
   color: #999;
-  display: inline;
   margin-left: .5em;
+  max-width: 150px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow:ellipsis;
 }
 
 .home {
@@ -58,11 +70,15 @@ aside li .item-name address {
 .page section .label {
   width: 150px;
 }
+.page .description,
 .page section .value .text-line {
   white-space: pre;
 }
+.page .description {
+  margin-bottom: 30px;
+}
 .page section .value .text-comment {
-  color: #aaa;
+  color: rgb(0, 177, 74);
 }
 .page section .value .text-normal {
   margin-bottom: 8px;
@@ -103,7 +119,7 @@ aside li .item-name address {
       <div class="description">{{current.description}}</div>
       <section class="path">
         <div class="label">PATH</div>
-        <div class="value">{{baseUrl}}{{current.path}}</div>
+        <div class="value">{{current.path}}</div>
       </section>
       <section class="method">
         <div class="label">METHOD</div>
@@ -144,7 +160,7 @@ const vm = new Vue({
   el: '#app',
   data: {
     current: null,
-    data: DATA.data,
+    data: DATA,
     baseUrl: DATA.baseUrl,
   },
   methods: {
@@ -168,7 +184,7 @@ const vm = new Vue({
 })
 
 function find(chain) {
-  const { data } = DATA
+  const data = DATA
   if (chain.indexOf('/') > 0) {
     const [groupName, itemName] = chain.split('/')
     const group = data.find(item => item.name === decodeURIComponent(groupName))
