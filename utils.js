@@ -124,7 +124,17 @@ function getPath(obj, target) {
   return keyPath
 }
 
+function createUrl(path, params = {}) {
+  const keys = Object.keys(params)
+  keys.forEach((key) => {
+    const value = params[key]
+    path = path.replace(new RegExp(`:${key}(\/|$)`, 'g'), value + '$1')
+  })
+  return path
+}
+
 module.exports = {
   stringify,
   getPath,
+  createUrl,
 }

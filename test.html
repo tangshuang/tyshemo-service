@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+
+<title>__TITLE__</title>
+
+<style>
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#app {
+  display: flex;
+  height: 100%;
+}
+main {
+  flex: 1;
+  min-width: 500px;
+  height: 100%;
+}
+aside {
+  background: #f9f9f9;
+  width: 600px;
+  height: 100%;
+  overflow: auto;
+}
+.container {
+  margin: 40px;
+}
+
+main ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group {
+  padding: 15px 0;
+}
+.group-title {
+  display: flex;
+  align-items: center;
+}
+.group-title h3 {
+  margin-right: 10px;
+}
+.item {
+  padding-left: 30px;
+}
+.unit {
+  cursor: pointer;
+  padding: 10px 0;
+  padding-left: 40px;
+  border-bottom: #eeeeee solid 1px;
+  position: relative;
+}
+.unit-info {
+  display: flex;
+  align-items: flex-end;
+}
+.unit-method, .unit-name {
+  margin-right: 10px;
+}
+.unit-name {
+  font-weight: bold;
+}
+.unit-method, .unit-path {
+  font-size: .8em;
+}
+.unit-active .unit-name,
+.unit-active .unit-method,
+.unit-active .unit-path {
+  color: rgb(3, 107, 241);
+}
+.unit-path {
+  flex: 1;
+}
+.unit-ok {
+  color: #19c202;
+}
+.unit-failure {
+  color: #da0303;
+}
+.unit-buttons {
+  text-align: right;
+  font-size: .8em;
+}
+.unit-running {
+  display: inline-block;
+  border: #f1f1f1 solid 1px;
+  border-radius: 3px;
+  color: #999;
+  font-size: .8em;
+  padding: 3px 8px;
+}
+.unit-processing {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: #237a00;
+}
+
+.code {
+  white-space: pre;
+  font-size: .8em;
+  margin: 15px 0;
+}
+.icon {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+}
+.icon-ok {
+  background: #19c202;
+}
+.icon-failure {
+  background: #da0303;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 10px;
+  border-bottom: #eee solid 1px;
+  margin-bottom: 10px;
+}
+.current-name, .current-method {
+  margin-right: 10px;
+}
+.current-name {
+  font-weight: bold;
+}
+.current-method, .current-path {
+  font-size: .8em;
+}
+
+.current-failure-reacord {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: #eee solid 1px;
+}
+
+.dashboard-empty {
+  color: #999;
+}
+</style>
+
+<div id="app">
+  <main>
+    <div class="container">
+      <ul>
+        <li class="group" v-for="group in data" :key="group.name">
+          <div class="group-title">
+            <h3>{{group.name}}</h3>
+            <button @click="runGroupUnits(group)">Run Group</button>
+            <button @click="stopGroupUnits(group)">Stop Group</button>
+          </div>
+          <ul v-if="group.items">
+            <li class="item" v-for="item in group.items" :key="item.name">
+              <h4>{{item.name}}</h4>
+              <ul v-if="item.units">
+                <li class="unit" v-for="unit in item.units" :key="unit.name" @click="setCurrent(unit, item, group)" :class="{ 'unit-active': current === unit }">
+                  <div class="unit-info">
+                    <div class="unit-name">{{unit.name}}</div>
+                    <div class="unit-method">{{unit.method.toUpperCase()}}</div>
+                    <div class="unit-path">{{unit.path}}</div>
+                    <div class="unit-status">
+                      <span class="unit-ok"><i class="icon icon-ok"></i> {{unit.ok_count}}</span>
+                      <span class="unit-failure"><i class="icon icon-failure"></i> {{unit.failure_count}}</span>
+                      <span class="unit-running" v-if="unit.running">Running</span>
+                    </div>
+                  </div>
+                  <div class="unit-request" v-if="current === unit">
+                    <div class="code">{{stringify(unit.request)}}</div>
+                  </div>
+                  <div class="unit-buttons" v-if="current === unit">
+                    <span>frequency: {{unit.frequency || 0}}ms</span>
+                    <button v-if="unit.running" @click="stopUnit(unit)">Stop</button>
+                    <button v-if="!unit.running" @click="runUnit(unit)">Run</button>
+                  </div>
+                  <div class="unit-processing" :style="{ width: unit.processing ? '100%' : '0', transition: unit.processing ? 'width ' + (unit.frequency/1000) + 's' : 'width 0s' }"></div>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </main>
+  <aside v-if="current">
+    <div class="container">
+      <div class="dashboard-header">
+        <span class="current-name">{{current.name}}</span>
+        <span class="current-method">{{current.method.toUpperCase()}}</span>
+        <span class="current-path">{{current.path}}</span>
+      </div>
+      <div class="dashboard-content" v-if="current.failures && current.failures.length">
+        <div><strong>failures:</strong></div>
+        <ul>
+          <li class="current-failure-reacord" v-for="item in current.failures">
+            <div>startTime: {{datify(item.startTime)}}</div>
+            <div>request:</div>
+            <div class="code">{{stringify(item.request)}}</div>
+            <div>message: {{item.message}}</div>
+            <div>endTime: {{datify(item.endTime)}}</div>
+          </li>
+        </ul>
+      </div>
+      <div class="dashboard-empty" v-else>There is no failure records.</div>
+    </div>
+  </aside>
+</div>
+
+<script src="/tyshemo.js"></script>
+<script src="/vue.js"></script>
+<script src="/indb.js"></script>
+<script>
+const DATA = __DATA__
+const { InDB } = window.indb
+const { Parser, Ty } = window.tyshemo
+
+const idb = new InDB({
+  name: 'TySheMo_Service',
+  version: 1,
+  stores: [
+    {
+      name: 'records',
+      keyPath: 'id',
+      autoIncrement: true,
+      indexes: [
+        {
+          name: 'unit',
+          keyPath: 'unit',
+        },
+      ],
+    },
+  ],
+})
+const store = idb.use('records')
+
+const parser = new Parser()
+
+const vm = new Vue({
+  el: '#app',
+  data: {
+    current: null,
+    data: DATA,
+  },
+  methods: {
+    stringify(str) {
+      return JSON.stringify(str, null, 4)
+    },
+    datify(time) {
+      const date = new Date(time)
+      const year = date.getFullYear()
+      const month = date.getMonth() + 1
+      const day = date.getDate()
+      const hour = date.getHours()
+      const min = date.getMinutes()
+      const sec = date.getSeconds()
+      const ms = date.getMilliseconds()
+      return year + '-' + month + '-' + day + ' ' + hour + ':' + min + ':' + sec + '.' + ms
+    },
+    setCurrent(unit, item, group) {
+      this.current = unit
+      window.location.hash = '#' + group.name + '/' + item.name + '/' + unit.name
+      const aside = document.querySelector('aside')
+      if (aside) {
+        aside.scrollTo(0, 0)
+      }
+      update(unit)
+    },
+    runGroupUnits(group) {
+      each((unit) => {
+        if (!unit.frequency) {
+          return
+        }
+        this.runUnit(unit)
+      }, group)
+    },
+    stopGroupUnits(group) {
+      each((unit) => {
+        if (!unit.frequency) {
+          return
+        }
+        this.stopUnit(unit)
+      }, group)
+      vm.$forceUpdate()
+    },
+    async runUnit(unit) {
+      const { path, method, request, response, hash, frequency } = unit
+      const record = {
+        unit: hash,
+        request,
+        startTime: Date.now(),
+      }
+
+      unit.running = true
+      unit.processing = true
+      vm.$forceUpdate()
+
+      try {
+        let url = path
+        if (request && (method === 'get' || method === 'delete')) {
+          const search = Object.keys(request).map(key => key + '=' + request[key]).join('&')
+          url += '?' + search
+        }
+
+        let body, headers = {}
+        if (request && (method === 'post' || method === 'put')) {
+          body = JSON.stringify(request)
+          headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }
+        }
+
+        const res = await fetch(url, {
+          method: method.toUpperCase(),
+          body,
+          headers,
+        })
+        const data = await res.json()
+        const type = parser.parse(response)
+        Ty.expect(data).to.be(type)
+        await store.put({ ...record, status: 1, endTime: Date.now() })
+        await update(unit)
+      }
+      catch (e) {
+        const { message } = e
+        await store.put({ ...record, status: 0, message, endTime: Date.now() })
+        await update(unit)
+      }
+
+      if (!frequency) {
+        unit.running = false
+        unit.processing = false
+        vm.$forceUpdate()
+        return
+      }
+
+      await sleep(frequency)
+      unit.processing = false
+      vm.$forceUpdate()
+      await sleep(10)
+
+      if (!unit.running) {
+        return
+      }
+
+      this.runUnit(unit)
+    },
+    stopUnit(unit) {
+      unit.running = false
+      unit.processing = false
+    },
+  },
+})
+
+function find(chain) {
+  const data = DATA
+  if (chain.indexOf('/') > 0) {
+    const [groupName, itemName, unitName] = chain.split('/')
+    const group = data.find(item => item.name === decodeURIComponent(groupName))
+    if (!group) {
+      return
+    }
+    const item = group.items.find(item => item.name === decodeURIComponent(itemName))
+    if (!item) {
+      return
+    }
+    const unit = item.units.find(item => item.name === unitName)
+    return unit
+  }
+  else {
+    for (let i = 0, len = data.length; i < len; i ++) {
+      const group = data[i]
+      const { items } = group
+      for (let i = 0, len = items.length; i < len; i ++) {
+        const item = items[i]
+        const { units } = item
+        const unit = units.find(item => item.name === chain)
+        if (unit) {
+          return unit
+        }
+      }
+    }
+  }
+}
+
+async function update(unit) {
+  const records = await store.query('unit', unit.hash)
+  const okItems = []
+  const failItems = []
+  records.forEach((item) => {
+    if (item.status) {
+      okItems.push(item)
+    }
+    else {
+      failItems.push(item)
+    }
+  })
+
+  unit.ok_count = okItems.length
+  unit.failure_count = failItems.length
+  unit.failures = failItems
+  vm.$forceUpdate()
+}
+
+function each(fn, scope) {
+  const data = DATA
+  data.forEach((group) => {
+    if (!group.items) {
+      return
+    }
+    if (scope && scope !== group) {
+      return
+    }
+    group.items.forEach((item) => {
+      if (!item.units) {
+        return
+      }
+      item.units.forEach(fn)
+    })
+  })
+}
+
+function sleep(time) {
+  return new Promise(resolve => setTimeout(resolve, time))
+}
+
+window.addEventListener('load', () => {
+  const { hash } = window.location
+  if (!hash) {
+    return
+  }
+
+  const name = hash.substr(1)
+  const unit = find(name)
+  if (!unit) {
+    return
+  }
+
+  vm.current = unit
+  each(update)
+})
+
+document.addEventListener('click', () => {
+  vm.current = null
+  window.location.hash = ''
+}, true)
+</script>

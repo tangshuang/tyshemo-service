@@ -6,14 +6,17 @@
   "scripts": {
     "doc": "node examples/doc.js",
     "mock": "node examples/mock.js",
+    "test": "node examples/test.js",
     "start": "npm run doc"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.17.1",
+    "http-proxy-middleware": "^0.20.0",
+    "indb": "^3.0.0",
     "ts-fns": "^0.1.1",
-    "tyshemo": "^2.9.1"
+    "tyshemo": "^2.10.0"
   },
   "devDependencies": {
     "vue": "^2.6.10"

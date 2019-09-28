@@ -47,10 +47,22 @@ const service = new Service({
       items: [
         {
           name: 'Person',
-          method: 'get',
+          method: 'post',
           path: '/person/:id',
           request: RequestType,
           response: ResponseType,
+          test: [
+            {
+              frequency: 60000,
+              name: '123',
+              params: { id: 123 },
+              request: { age: '10' },
+            },
+            {
+              name: '111',
+              params: { id: 111 },
+            },
+          ],
         },
         {
           name: 'Desk',
