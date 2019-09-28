@@ -21,23 +21,26 @@ DeskType.__comments = {
 }
 
 const service = new Service({
-  responseWrapper: (data) => {
+  getResponseType(type) {
     return {
       code: 0,
-      data,
+      data: type,
     }
   },
-  errorWrapper: (error) => {
+  getErrorType(type) {
     return {
-      code: 10000,
-      error,
+      code: Number,
+      error: type,
     }
   },
-  globalErrors: {
+  getRequestType(type) {
+    return type
+  },
+  errorMapping: {
     10000: 'Database broken',
     10005: 'network error',
   },
-  baseUrl: '/api/v2',
+  basePath: '/api/v2',
   data: [
     {
       name: 'Default Group',
@@ -53,7 +56,7 @@ const service = new Service({
           name: 'Desk',
           description: 'description for desk\nbreak line for demo',
           method: 'get',
-          baseUrl: '/api/v3',
+          basePath: '/api/v3',
           path: '/desk/:id',
           response: DeskType,
         },
@@ -62,6 +65,4 @@ const service = new Service({
   ],
 })
 
-// service.mock()
-// service.doc()
 module.exports = service

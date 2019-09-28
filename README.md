@@ -25,14 +25,15 @@ server.mock() // serve up a mocker server
 ```
 {
   // required
-  data: {},
+  data: [],
 
   // optionals
-  baseUrl: string, // api base url
-  requestWrapper: function, // to wrap request data in an object
-  responseWrapper: function, // to wrap response data in an object
-  errorWrapper: function, // to wrap error message in an object
-  globalErrors: mapping, // mapping for error code and messages
+  basePath: string, // api base url
+  getRequestType: function, // to wrap request data in an object
+  getResponseType: function, // to wrap response data in an object
+  getErrorType: function, // to wrap error message in an object
+  errorMapping: mapping, // mapping for error code and messages
+
   mockConfig: {}, // mocker config
   parseConfig: {}, // parser config
 }
@@ -66,7 +67,7 @@ function(responsData) {
 To serve up, the most important information to pick from.
 
 ```
-[ // group level, to group apis and show tree in doc
+data: [ // group level, to group apis and show tree in doc
   {
     name: 'group name',
     items: [ // api item level
@@ -74,11 +75,17 @@ To serve up, the most important information to pick from.
         name: 'api name',
         description: 'api description',
         method: 'get', // lowercase, will be used by express to route
-        path: '/path/:id', // concat with baseUrl, will be used by express to serve up mock server, show in doc page
+        path: '/path/:id', // concat with basePath, will be used by express to serve up mock server, show in doc page
+
         request: RequestType, // data type container which created by TySheMo
         response: ResponseType,
-        error: any, // will be passed into errorWrapper
-        errors: mapping, // merge with globalErrors
+
+        // override global options
+        basePath: '',
+        getRequestType: null,
+        getResponseType: null,
+        getErrorType: null,
+        errorMapping: {},
       },
     ],
   }
@@ -108,8 +115,8 @@ When you invoke `server.doc()` or `server.mock()`, you can pass server config in
 ```js
 server.doc({
   port: 9000,
-  title: 'My App API DOC',
-  description: '',
+  title: 'My App API DOC', // the doc page title
+  description: '', // the doc page description
 })
 ```
 

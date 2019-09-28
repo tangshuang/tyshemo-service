@@ -40,6 +40,9 @@ aside li .item-name {
   display: flex;
   align-items: center;
 }
+aside li .item-name-active {
+  color: rgb(0, 88, 189);
+}
 aside li .item-name address {
   color: #999;
   margin-left: .5em;
@@ -97,11 +100,9 @@ aside li .item-name address {
       <li v-for="group in data" :key="group.name">
         <div class="group-name">{{group.name}}</div>
         <ul v-if="group.items && group.items.length">
-          <li v-for="item in group.items" :key="item.name">
-            <div class="item-name" @click="setItem(item, group)">
-              <span>{{item.name}}</span>
-              <address>{{item.path}}</address>
-            </div>
+          <li v-for="item in group.items" :key="item.name" class="item-name" @click="setItem(item, group)" :class="{ 'item-name-active': item === current }">
+            <span>{{item.name}}</span>
+            <address>{{item.path}}</address>
           </li>
         </ul>
       </li>
@@ -143,7 +144,7 @@ aside li .item-name address {
           <div>
             <div class="text-line" v-for="item in split(current.error)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
           </div>
-          <div class="extra" v-if="current.errors"><strong>code:</strong></div>
+          <div class="extra" v-if="current.errors"><strong>mapping:</strong></div>
           <div v-if="current.errors">
             <div class="text-line" v-for="item in split(current.errors)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
           </div>
@@ -153,7 +154,7 @@ aside li .item-name address {
   </main>
 </div>
 
-<script src="/vue.js"></script>
+<script src="/vue"></script>
 <script>
 const DATA = __DATA__
 const vm = new Vue({
@@ -179,6 +180,7 @@ const vm = new Vue({
     setItem(item, group) {
       this.current = item
       window.location.hash = '#' + group.name + '/' + item.name
+      document.querySelector('main').scrollTo(0, 0)
     }
   },
 })
