@@ -169,7 +169,7 @@ main ul {
                     <div class="unit-status">
                       <span class="unit-ok"><i class="icon icon-ok"></i> {{unit.ok_count}}</span>
                       <span class="unit-failure"><i class="icon icon-failure"></i> {{unit.failure_count}}</span>
-                      <span class="unit-running" v-if="unit.running">Running</span>
+                      <span class="unit-running" v-if="unit.frequency && unit.running">Running</span>
                     </div>
                   </div>
                   <div class="unit-request" v-if="current === unit">
@@ -460,7 +460,7 @@ window.addEventListener('load', () => {
   each(update)
 })
 
-document.addEventListener('click', () => {
+document.querySelector('main').addEventListener('click', () => {
   vm.current = null
   window.location.hash = ''
 }, true)
