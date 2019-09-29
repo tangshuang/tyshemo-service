@@ -329,10 +329,23 @@ const vm = new Vue({
         await update(unit)
       }
       catch (e) {
+        console.error(e)
         const { message } = e
         await store.put({ ...record, status: 0, message, endTime: Date.now() })
         await update(unit)
       }
+
+      setTimeout(() => {
+        // update request data which to be used next time
+        fetch('/__request_mock_data__/' + hash).then((res) => {
+          if (!res.ok || res.status !== 200) {
+            throw new Error(res.statusText)
+          }
+          return res.json()
+        }).then((requestData) => {
+          unit.request = requestData
+        })
+      })
 
       if (!frequency) {
         unit.running = false

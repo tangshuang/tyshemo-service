@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "doc": "node examples/doc.js",
-    "mock": "node examples/mock.js",
-    "test": "node examples/test.js",
+    "doc": "nodemon examples/doc.js",
+    "mock": "nodemon examples/mock.js",
+    "test": "nodemon examples/test.js",
     "start": "npm run doc"
   },
   "author": "",
@@ -19,6 +19,7 @@
     "tyshemo": "^2.10.0"
   },
   "devDependencies": {
+    "nodemon": "^1.19.2",
     "vue": "^2.6.10"
   }
 }

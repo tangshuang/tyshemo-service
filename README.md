@@ -123,5 +123,7 @@ server.doc({
 ```js
 server.mock({
   port: 9000,
+  title: 'My App Mock Server',
+  description: '',
 })
 ```
