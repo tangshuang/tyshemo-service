@@ -160,7 +160,8 @@ class Service {
 
     app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.js')))
     app.use('*', (req, res) => {
-      fs.readFile(path.resolve(__dirname, 'doc.html'), (error, buffer) => {
+      const { docTemplateFile = path.resolve(__dirname, 'doc.html') } = this.options
+      fs.readFile(docTemplateFile, (error, buffer) => {
         let text = buffer.toString()
         text = text.replace(/__TITLE__/g, title)
         text = text.replace(/__DESCRIPTION__/g, description)
@@ -341,7 +342,9 @@ class Service {
           }).filter(item => !!item),
         }
       }).filter(item => !!item)
-      fs.readFile(path.resolve(__dirname, 'test.html'), (error, buffer) => {
+
+      const { testTemplateFile = path.resolve(__dirname, 'test.html') } = this.options
+      fs.readFile(testTemplateFile, (error, buffer) => {
         let text = buffer.toString()
         text = text.replace(/__TITLE__/g, title)
         text = text.replace(/__DESCRIPTION__/g, description)

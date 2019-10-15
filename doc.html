@@ -6,6 +6,7 @@ html, body, #app {
   height: 100%;
   margin: 0;
   padding: 0;
+  /* font-family: Tahoma, Verdana, Arial, Helvetica, Sans-serif; */
 }
 #app {
   display: flex;
@@ -36,6 +37,9 @@ aside li {
 aside li li {
   cursor: pointer;
 }
+aside li .group-name {
+  font-weight: bold;
+}
 aside li .item-name {
   display: flex;
   align-items: center;
@@ -49,7 +53,7 @@ aside li .item-name address {
   max-width: 150px;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow:ellipsis;
+  text-overflow: ellipsis;
 }
 
 .home {
@@ -97,10 +101,10 @@ aside li .item-name address {
 <div id="app">
   <aside>
     <ul>
-      <li v-for="group in data" :key="group.name">
+      <li v-for="group in data" :key="getId(group)">
         <div class="group-name">{{group.name}}</div>
         <ul v-if="group.items && group.items.length">
-          <li v-for="item in group.items" :key="item.name" class="item-name" @click="setCurrent(item, group)" :class="{ 'item-name-active': item === current }">
+          <li v-for="item in group.items" :key="getId(item)" class="item-name" @click="setCurrent(item, group)" :class="{ 'item-name-active': item === current }">
             <span>{{item.name}}</span>
             <address>{{item.path}}</address>
           </li>
@@ -144,7 +148,7 @@ aside li .item-name address {
           <div>
             <div class="text-line" v-for="item in split(current.error)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
           </div>
-          <div class="extra" v-if="current.errors"><strong>mapping:</strong></div>
+          <div class="extra" v-if="current.errors"><strong>code mapping:</strong></div>
           <div v-if="current.errors">
             <div class="text-line" v-for="item in split(current.errors)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
           </div>
@@ -178,28 +182,35 @@ const vm = new Vue({
     },
     setCurrent(item, group) {
       this.current = item
-      window.location.hash = '#' + group.name + '/' + item.name
+      window.location.hash = '#' + getId(group) + '/' + getId(item)
       document.querySelector('main').scrollTo(0, 0)
+    },
+    getId(item) {
+      return getId(item)
     },
   },
 })
+
+function getId(item) {
+  return item.id || item.name
+}
 
 function find(chain) {
   const data = DATA
   if (chain.indexOf('/') > 0) {
     const [groupName, itemName] = chain.split('/')
-    const group = data.find(item => item.name === decodeURIComponent(groupName))
+    const group = data.find(item => getId(item) === decodeURIComponent(groupName))
     if (!group) {
       return
     }
-    const item = group.items.find(item => item.name === decodeURIComponent(itemName))
+    const item = group.items.find(item => getId(item) === decodeURIComponent(itemName))
     return item
   }
   else {
     for (let i = 0, len = data.length; i < len; i ++) {
       const group = data[i]
       const { items } = group
-      const item = items.find(item => item.name === chain)
+      const item = items.find(item => getId(item) === chain)
       if (item) {
         return item
       }

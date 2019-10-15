@@ -36,6 +36,10 @@ server.mock() // serve up a mocker server
 
   mockConfig: {}, // mocker config
   parseConfig: {}, // parser config
+
+  // give your own template
+  docTemplateFile: __dirname + '/doc.html',
+  testTemplateFile: __dirname + '/test.html',
 }
 ```
 
@@ -127,3 +131,9 @@ server.mock({
   description: '',
 })
 ```
+
+## template
+
+The `docTemplateFile` and `testTemplateFile` give your the ability to modify want you see in browser. You should look into [doc.html](./doc.html) and [test.html](./test.html).
+
+The placeholder string `__TITLE__` `__DESCRIPTION__` and `__DATA__` can be used in your template.

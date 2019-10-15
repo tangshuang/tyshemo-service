@@ -16,7 +16,7 @@
     "http-proxy-middleware": "^0.20.0",
     "indb": "^3.0.0",
     "ts-fns": "^0.1.1",
-    "tyshemo": "^2.10.0"
+    "tyshemo": "^3.0.1"
   },
   "devDependencies": {
     "nodemon": "^1.19.2",

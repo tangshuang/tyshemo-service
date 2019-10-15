@@ -158,7 +158,7 @@ main ul {
             <button @click="stopGroupUnits(group)">Stop Group</button>
           </div>
           <ul v-if="group.items">
-            <li class="item" v-for="item in group.items" :key="item.name">
+            <li class="item" v-for="item in group.items" :key="getId(item)">
               <h4>{{item.name}}</h4>
               <ul v-if="item.units">
                 <li class="unit" v-for="unit in item.units" :key="unit.name" @click="setCurrent(unit, item, group)" :class="{ 'unit-active': current === unit }">
@@ -265,7 +265,7 @@ const vm = new Vue({
     },
     setCurrent(unit, item, group) {
       this.current = unit
-      window.location.hash = '#' + group.name + '/' + item.name + '/' + unit.name
+      window.location.hash = '#' + getId(group) + '/' + getId(item) + '/' + getId(unit)
       const aside = document.querySelector('aside')
       if (aside) {
         aside.scrollTo(0, 0)
@@ -369,22 +369,30 @@ const vm = new Vue({
       unit.running = false
       unit.processing = false
     },
+
+    getId(item) {
+      return getId(item)
+    },
   },
 })
+
+function getId(item) {
+  return item.id || item.name
+}
 
 function find(chain) {
   const data = DATA
   if (chain.indexOf('/') > 0) {
     const [groupName, itemName, unitName] = chain.split('/')
-    const group = data.find(item => item.name === decodeURIComponent(groupName))
+    const group = data.find(item => item.id === groupName || item.name === decodeURIComponent(groupName))
     if (!group) {
       return
     }
-    const item = group.items.find(item => item.name === decodeURIComponent(itemName))
+    const item = group.items.find(item => item.id === itemName || item.name === decodeURIComponent(itemName))
     if (!item) {
       return
     }
-    const unit = item.units.find(item => item.name === unitName)
+    const unit = item.units.find(item => item.id === unitName || item.name === decodeURIComponent(unitName))
     return unit
   }
   else {
@@ -394,7 +402,7 @@ function find(chain) {
       for (let i = 0, len = items.length; i < len; i ++) {
         const item = items[i]
         const { units } = item
-        const unit = units.find(item => item.name === chain)
+        const unit = units.find(item => item.id === chain || item.name === decodeURIComponent(chain))
         if (unit) {
           return unit
         }
