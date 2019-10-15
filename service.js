@@ -5,7 +5,7 @@ const { Ty } = require('tyshemo')
 const fs = require('fs')
 const path = require('path')
 const { stringify, getPath, createUrl } = require('./utils')
-const { isArray, parse, isObject, clone, assign, getObjectHash } = require('ts-fns')
+const { isArray, parse, isObject, clone, assign, getObjectHash, each, isFunction } = require('ts-fns')
 const proxy = require('http-proxy-middleware')
 
 
@@ -78,6 +78,19 @@ class Service {
         const resPattern = getResponseType ? getResponseType(response) : response
         const type = Ty.create(resPattern)
         const data = this.mocker.mock(type)
+
+        if (response.__mocks) {
+          each(response.__mocks, (value, keyPath) => {
+            if (isFunction(value)) {
+              const v = value(type)
+              assign(data, keyPath, v)
+            }
+            else {
+              assign(data, keyPath, value)
+            }
+          })
+        }
+
         res.json(data)
       })
     })

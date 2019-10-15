@@ -132,6 +132,23 @@ server.mock({
 })
 ```
 
+To override mock data when you need to, you can set a `__mocks` property to respons type. The usage is like __comments.
+
+```js
+const { ResponseType } = require('./types')
+
+ResponseType.__mocks = {
+  'books[0].name': 'xxx', // constant
+  'books[0].price': () => Match.random() * 100, // computed
+}
+```
+
+Then when you setup a mock server, the output of this item, will be override by __mocks.
+
+It receive two type of value: function, constants.
+
+When it receive a function, the function will receive the current type, and the return value will be used as the keyPath value.
+
 ## template
 
 The `docTemplateFile` and `testTemplateFile` give your the ability to modify want you see in browser. You should look into [doc.html](./doc.html) and [test.html](./test.html).
