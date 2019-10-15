@@ -7,7 +7,7 @@
     "doc": "nodemon examples/doc.js",
     "mock": "nodemon examples/mock.js",
     "test": "nodemon examples/test.js",
-    "start": "npm run doc"
+    "start": "nodemon examples/serve.js"
   },
   "author": "",
   "license": "ISC",

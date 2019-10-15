@@ -145,6 +145,25 @@ main ul {
 .dashboard-empty {
   color: #999;
 }
+.actions {
+  text-align: right;
+}
+
+.toast {
+  width: auto;
+  height: auto;
+  background: rgba(0, 0, 0, .8);
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 10px;
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  top: -100%;
+}
+.toast-in {
+  top: 50%;
+}
 </style>
 
 <div id="app">
@@ -205,12 +224,14 @@ main ul {
             <div class="code">{{stringify(item.request)}}</div>
             <div>message: {{item.message}}</div>
             <div>endTime: {{datify(item.endTime)}}</div>
+            <div class="actions"><button @click="replay(item)">replay</button></div>
           </li>
         </ul>
       </div>
       <div class="dashboard-empty" v-else>There is no failure records.</div>
     </div>
   </aside>
+  <div class="toast" :class="{ 'toast-in': toast }">{{toast}}</div>
 </div>
 
 <script src="/tyshemo.js"></script>
@@ -222,17 +243,16 @@ const { InDB } = window.indb
 const { Parser, Ty } = window.tyshemo
 
 const idb = new InDB({
-  name: 'TySheMo_Service',
+  name: 'TySheMoService',
   version: 1,
   stores: [
     {
       name: 'records',
-      keyPath: 'id',
+      keyPath: '$',
       autoIncrement: true,
       indexes: [
         {
-          name: 'unit',
-          keyPath: 'unit',
+          name: 'hash',
         },
       ],
     },
@@ -247,6 +267,7 @@ const vm = new Vue({
   data: {
     current: null,
     data: DATA,
+    toast: '',
   },
   methods: {
     stringify(str) {
@@ -290,9 +311,11 @@ const vm = new Vue({
       vm.$forceUpdate()
     },
     async runUnit(unit) {
-      const { path, method, request, response, hash, frequency } = unit
+      const { path, method, request, response, hash, frequency, id, name } = unit
       const record = {
-        unit: hash,
+        id,
+        name,
+        hash,
         request,
         startTime: Date.now(),
       }
@@ -370,6 +393,24 @@ const vm = new Vue({
       unit.processing = false
     },
 
+    replay(item) {
+      const id = getId(item)
+      if (!id) {
+        toast('This record is not in your units any more.')
+        return
+      }
+
+      const unit = find(id)
+      unit.request = item.request
+
+      if (!unit.running) {
+        this.runUnit(unit)
+      }
+      else {
+        toast('Request data has been set, it will be used next run time.')
+      }
+    },
+
     getId(item) {
       return getId(item)
     },
@@ -412,7 +453,7 @@ function find(chain) {
 }
 
 async function update(unit) {
-  const records = await store.query('unit', unit.hash)
+  const records = await store.query('hash', unit.hash)
   const okItems = []
   const failItems = []
   records.forEach((item) => {
@@ -452,7 +493,14 @@ function sleep(time) {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
+function toast(msg, time = 2000) {
+  vm.toast = msg
+  setTimeout(() => vm.toast = '', time)
+}
+
 window.addEventListener('load', () => {
+  each(update) // set all units' count
+
   const { hash } = window.location
   if (!hash) {
     return
@@ -465,7 +513,6 @@ window.addEventListener('load', () => {
   }
 
   vm.current = unit
-  each(update)
 })
 
 document.querySelector('main').addEventListener('click', () => {
