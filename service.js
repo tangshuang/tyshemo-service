@@ -172,6 +172,7 @@ class Service {
     })
 
     app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.js')))
+    app.use('/darkmode.js', express.static(path.resolve(__dirname, 'node_modules/darkmode-js/lib/darkmode-js.min.js')))
     app.use(root, (req, res) => {
       const { docTemplateFile = path.resolve(__dirname, 'doc.html') } = this.options
       fs.readFile(docTemplateFile, (error, buffer) => {
