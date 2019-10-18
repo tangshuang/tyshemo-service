@@ -4,6 +4,12 @@ DeskType.__comments = {
   'height': 'the height of desk',
 }
 
+DeskType.__mocks = {
+  'books[*].price': function(data, indexes) {
+    return 12
+  },
+}
+
 module.exports = {
   name: 'Desk',
   description: 'description for desk\nbreak line for demo',

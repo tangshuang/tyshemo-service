@@ -16,7 +16,7 @@
     "express": "^4.17.1",
     "http-proxy-middleware": "^0.20.0",
     "indb": "^3.0.0",
-    "ts-fns": "^0.1.1",
+    "ts-fns": "^1.0.3",
     "tyshemo": "^3.0.1"
   },
   "devDependencies": {

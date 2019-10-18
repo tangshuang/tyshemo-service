@@ -24,6 +24,12 @@ const DeskType = new Dict({
   size: Number,
   height: Number,
   num: String8,
+  books: [
+    {
+      name: String,
+      price: Number,
+    },
+  ],
 })
 
 module.exports = {

@@ -5,7 +5,7 @@ const { Ty } = require('tyshemo')
 const fs = require('fs')
 const path = require('path')
 const { stringify, getPath, createUrl } = require('./utils')
-const { isArray, parse, isObject, clone, assign, getObjectHash, each, isFunction } = require('ts-fns')
+const { isArray, parse, isObject, clone, assign, getObjectHash, each, isFunction, createArray, makeKeyPath } = require('ts-fns')
 const proxy = require('http-proxy-middleware')
 
 
@@ -80,16 +80,65 @@ class Service {
         const data = this.mocker.mock(type)
 
         if (response.__mocks) {
-          each(response.__mocks, (value, keyPath) => {
+          const root = getResponseType ? getPath(getResponseType(RANDOM), RANDOM) : ''
+          const getMarks = (str) => {
+            const marks = []
+            str.replace(/\[\*\]/g, (match, index) => {
+              marks.push(index)
+            })
+            return marks
+          }
+          const replaceByMarks = (str, marks, indexes) => {
+            const letters = str.split('')
+            marks.forEach((mark, i) => {
+              const index = indexes[i]
+              letters.splice(mark, 3, '[', index, ']')
+            })
+            const path = letters.join('')
+            return path
+          }
+          const replace = (keyPath, value, indexes) => {
             if (isFunction(value)) {
-              const v = value(type)
+              const v = value(data, indexes)
               assign(data, keyPath, v)
             }
             else {
               assign(data, keyPath, value)
             }
+          }
+
+          each(response.__mocks, (value, keyPath) => {
+            if (keyPath.indexOf('[*]') > -1) {
+              const marks = getMarks(keyPath)
+              const indexes = createArray(0, marks.length)
+              let lastAt = indexes.length - 1
+              while (lastAt >= 0) {
+                const replacedPath = replaceByMarks(keyPath, marks, indexes)
+                const makedPath = root ? makeKeyPath([root, replacedPath]) : replacedPath
+                const v = parse(data, makedPath)
+                // if not exist
+                if (v === undefined) {
+                  if (lastAt === 0) {
+                    break
+                  }
+                  indexes[lastAt] = 0
+                  lastAt --
+                  indexes[lastAt] ++
+                  continue
+                }
+                else {
+                  replace(makedPath, value, indexes)
+                  indexes[lastAt] ++
+                }
+              }
+            }
+            else {
+              const makedPath = root ? makeKeyPath([root, keyPath]) : keyPath
+              replace(makedPath, value)
+            }
           })
         }
+
 
         res.json(data)
       })
