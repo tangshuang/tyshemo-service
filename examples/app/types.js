@@ -1,4 +1,4 @@
-const { Dict, ifexist, String8, Int, Numeric } = require('tyshemo')
+const { Dict, ifexist, String8, Int, Numeric } = require('tyshemo-x')
 
 const RequestType = new Dict({
   name: String8,

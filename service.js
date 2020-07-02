@@ -1,12 +1,10 @@
-const { Mocker } = require('tyshemo/dist/mocker')
-const { Parser } = require('tyshemo/dist/parser')
+const { TypeMocker, TypeParser, Ty } = require('tyshemo-x')
 const express = require('express')
-const { Ty } = require('tyshemo')
 const fs = require('fs')
 const path = require('path')
 const { stringify, getPath, createUrl } = require('./utils')
 const { isArray, parse, isObject, clone, assign, getObjectHash, each, isFunction, createArray, makeKeyPath } = require('ts-fns')
-const proxy = require('http-proxy-middleware')
+const { createProxyMiddleware } = require('http-proxy-middleware')
 
 
 const RANDOM = '************' + Math.random() + '***********'
@@ -15,8 +13,8 @@ class Service {
   constructor(options = {}) {
     const { data, mockConfig, parseConfig } = options
     this.data = data
-    this.mocker = new Mocker(mockConfig)
-    this.parser = new Parser(parseConfig)
+    this.mocker = new TypeMocker(mockConfig)
+    this.parser = new TypeParser(parseConfig)
     this.options = options
   }
 
@@ -277,7 +275,7 @@ class Service {
     }
 
     app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.min.js')))
-    app.use('/tyshemo.js', express.static(path.resolve(__dirname, 'node_modules/tyshemo/dist/bundle.js')))
+    app.use('/tyshemo.js', express.static(path.resolve(__dirname, 'node_modules/tyshemo-x/tyshemo-x.js')))
     app.use('/indb.js', express.static(path.resolve(__dirname, 'node_modules/indb/dist/indb.js')))
     app.use('/__request_mock_data__/:hash', (req, res) => {
       const { hash } = req.params
@@ -424,7 +422,7 @@ class Service {
       })
     })
     if (target) {
-      app.use('/*', proxy('/', {
+      app.use('/*', createProxyMiddleware({
         target,
         changeOrigin: true,
       }))

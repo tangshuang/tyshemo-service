@@ -1,4 +1,3 @@
-
 const { isArray, isObject, each, makeKeyPath } = require('ts-fns')
 
 function stringify(data, comments = {}, commentRoot = '') {

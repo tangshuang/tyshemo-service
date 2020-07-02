@@ -240,7 +240,7 @@ main ul {
 <script>
 const DATA = __DATA__
 const { InDB } = window.indb
-const { Parser, Ty } = window.tyshemo
+const { TypeParser, Ty } = window.tyshemo
 
 const idb = new InDB({
   name: 'TySheMoService',
@@ -260,7 +260,7 @@ const idb = new InDB({
 })
 const store = idb.use('records')
 
-const parser = new Parser()
+const parser = new TypeParser()
 
 const vm = new Vue({
   el: '#app',

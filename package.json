@@ -12,15 +12,15 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "darkmode-js": "^1.5.0",
+    "darkmode-js": "^1.5.6",
     "express": "^4.17.1",
-    "http-proxy-middleware": "^0.20.0",
-    "indb": "^3.0.0",
-    "ts-fns": "^1.0.3",
-    "tyshemo": "^3.0.1"
+    "http-proxy-middleware": "^1.0.4",
+    "indb": "^3.1.1",
+    "ts-fns": "^6.4.5",
+    "tyshemo-x": "^4.1.0"
   },
   "devDependencies": {
-    "nodemon": "^1.19.2",
-    "vue": "^2.6.10"
+    "nodemon": "^1.19.4",
+    "vue": "^2.6.11"
   }
 }
