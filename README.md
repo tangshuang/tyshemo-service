@@ -111,28 +111,31 @@ server.serve()
 
 ```
 {
-  port: number,
+  port: number, // used when invoke server.serve()
+  // used when only invoke server.doc()
   doc?: {
     port: number,
-    title: string,
-    description: string,
-    template: FileAbsPath,
-    root: string, // the root uri to visit default '/'
+    title: string, // used when invoke server.serve()
+    description: string, // used when invoke server.serve()
+    template: FileAbsPath, // used when invoke server.serve()
+    root: string, // the root uri to visit default '/' // used when invoke server.serve()
   },
+  // used when only invoke server.mock()
   mock?: {
     port: number,
+    transformer: function, // you can modify mock data before it out // used when invoke server.serve()
   },
+  // used when only invoke server.test()
   test?: {
     port: number,
-    target: 'http://my.api.com', // the target api host to test
-    title: string,
-    description: string,
-    root: string, // defualt '/', '/_test' when serve
-    template: FileAbsPath,
+    target: 'http://my.api.com', // the target api host to test // used when invoke server.serve()
+    title: string, // used when invoke server.serve()
+    description: string, // used when invoke server.serve()
+    root: string, // defualt '/', '/_test' when serve // used when invoke server.serve()
+    template: FileAbsPath, // used when invoke server.serve()
   },
 }
 ```
-
 
 When you invoke `server.doc()` or `server.mock()`, you can pass server config into these methods.
 
