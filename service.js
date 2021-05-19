@@ -1,24 +1,39 @@
-const { TypeMocker, TypeParser, Ty } = require('tyshemo-x')
+const { Mocker, Parser, Ty } = require('tyshemo')
 const express = require('express')
 const fs = require('fs')
 const path = require('path')
 const { stringify, getPath, createUrl } = require('./utils')
-const { isArray, parse, isObject, clone, assign, getObjectHash, each, isFunction, createArray, makeKeyPath } = require('ts-fns')
+const {
+  isArray,
+  isString,
+  parse,
+  isObject,
+  clone,
+  assign,
+  getObjectHash,
+  each,
+  isFunction,
+  createArray,
+  makeKeyPath,
+  extend,
+} = require('ts-fns')
 const { createProxyMiddleware } = require('http-proxy-middleware')
 
 
 const RANDOM = '************' + Math.random() + '***********'
 
 class Service {
-  constructor(options = {}) {
-    const { data, mockConfig, parseConfig } = options
+  constructor(options = {}, configs = {}) {
+    const { data } = options
+    const { mocker, parser } = configs
     this.data = data
-    this.mocker = new TypeMocker(mockConfig)
-    this.parser = new TypeParser(parseConfig)
+    this.mocker = new Mocker(mocker)
+    this.parser = new Parser(parser)
     this.options = options
+    this.configs = configs
   }
 
-  mock(mockServerConfig = {}, server) {
+  mock(mockServerConfig, server) {
     const app = server || express()
 
     app.use(express.json())
@@ -30,42 +45,55 @@ class Service {
     })
 
     const {
-      basePath: globalBasePath,
-      getResponseType: globalGetResponseType,
-      getRequestType: globalGetRequestType,
-      getErrorType: globalGetErrorType,
-      errorMapping: globalErrorMapping = {},
+      base: globalBasePath,
+      error: globalError = {
+        code: 'error_code',
+        error: 'error_message',
+      },
     } = this.options
 
-    const { port = 8089 } = mockServerConfig
+    const {
+      port = 8089
+    } = mockServerConfig || this.configs.mock || {}
 
     items.forEach((item) => {
       const {
         method,
+        base = globalBasePath,
         path,
         request,
         response,
-        basePath = globalBasePath,
-        getResponseType = globalGetResponseType,
-        getRequestType = globalGetRequestType,
-        getErrorType = globalGetErrorType,
-        errorMapping = {},
+        error = globalError,
+        mock: mockRules,
       } = item
 
-      const url = (basePath ? basePath : '') + path
+      const url = (base ? base : '') + path
 
       app[method](url, (req, res) => {
         // check req data
         if (request) {
-          const data = method === 'get' ? req.query : req.body
-          const reqPattern = getRequestType ? getRequestType(request) : request
-          const type = Ty.create(reqPattern)
-          const err = Ty.catch(data).by(type)
-          if (err) {
-            const { message } = err
-            const errPattern = getErrorType ? getErrorType(message) : { message }
-            const errType = Ty.create(errPattern)
-            const errJson = this.mocker.mock(errType)
+          const reqData = method === 'get' ? req.query : req.body
+          const reqType = this.parser.parse(request)
+          const reqErr = Ty.catch(reqData).by(reqType)
+          if (reqErr) {
+            const { message } = reqErr
+            const errDesc = {
+              __def__: [
+                {
+                  name: 'error_code',
+                  def: '499',
+                },
+                {
+                  name: 'error_message',
+                  def: `'Request Data Type Checking Fail: ${message.replace(/'/g, '"')}'`,
+                }
+              ],
+              ...error,
+            }
+
+            const errType = this.parser(errDesc)
+            const errJson = this.mock(errType)
+
             res.status(499)
             res.json(errJson)
             return
@@ -73,12 +101,10 @@ class Service {
         }
 
         // give mock data for response
-        const resPattern = getResponseType ? getResponseType(response) : response
-        const type = Ty.create(resPattern)
-        const data = this.mocker.mock(type)
+        const resType = this.parser.parse(response)
+        const data = this.mocker.mock(resType)
 
-        if (response.__mocks) {
-          const root = getResponseType ? getPath(getResponseType(RANDOM), RANDOM) : ''
+        if (mockRules) {
           const getMarks = (str) => {
             const marks = []
             str.replace(/\[\*\]/g, (match, index) => {
@@ -105,15 +131,14 @@ class Service {
             }
           }
 
-          each(response.__mocks, (value, keyPath) => {
+          each(mockRules, (value, keyPath) => {
             if (keyPath.indexOf('[*]') > -1) {
               const marks = getMarks(keyPath)
               const indexes = createArray(0, marks.length)
               let lastAt = indexes.length - 1
               while (lastAt >= 0) {
                 const replacedPath = replaceByMarks(keyPath, marks, indexes)
-                const makedPath = root ? makeKeyPath([root, replacedPath]) : replacedPath
-                const v = parse(data, makedPath)
+                const v = parse(data, replacedPath)
                 // if not exist
                 if (v === undefined) {
                   if (lastAt === 0) {
@@ -125,38 +150,43 @@ class Service {
                   continue
                 }
                 else {
-                  replace(makedPath, value, indexes)
+                  replace(replacedPath, value, indexes)
                   indexes[lastAt] ++
                 }
               }
             }
             else {
-              const makedPath = root ? makeKeyPath([root, keyPath]) : keyPath
-              replace(makedPath, value)
+              replace(keyPath, value)
             }
           })
         }
-
 
         res.json(data)
       })
     })
     if (port) {
-      app.listen(port)
+      app.listen(port, () => console.log('http://localhost:' + port))
     }
   }
 
-  doc(docServerConfig = {}, server) {
+  doc(docServerConfig, server) {
     const app = server || express()
     const {
-      basePath: globalBasePath,
-      getResponseType: globalGetResponseType,
-      getRequestType: globalGetRequestType,
-      getErrorType: globalGetErrorType,
-      errorMapping: globalErrorMapping = {},
+      base: globalBasePath,
+      error: globalError = {
+        code: 'error_code',
+        error: 'error_message',
+      },
+      errorMapping,
     } = this.options
 
-    const { port = 8088, title = 'TySheMo', description = 'This is an api doc generated by TySheMo.', root = '/' } = docServerConfig
+    const {
+      port = 8088,
+      title = 'TySheMo',
+      description = 'This is an api doc generated by TySheMo.',
+      root = '/',
+      template = path.resolve(__dirname, 'doc.html'),
+    } = docServerConfig || this.configs.doc || {}
 
     const data = this.data.map((group) => {
       const { items } = group
@@ -170,39 +200,27 @@ class Service {
             path,
             request,
             response,
-            basePath = globalBasePath,
-            getResponseType = globalGetResponseType,
-            getRequestType = globalGetRequestType,
-            getErrorType = globalGetErrorType,
-            errorMapping = {},
+            base = globalBasePath,
+            error = globalError,
           } = item
 
-
-          const reqPattern = getRequestType ? getRequestType(request) : request
-          const reqType = reqPattern ? Ty.create(reqPattern) : null
+          const reqType = request ? this.parser.parse(request) : null
           const reqDesc = reqType ? this.parser.describe(reqType) : null
-          const reqCommentRoot = getRequestType ? getPath(getRequestType(RANDOM), RANDOM) : ''
-          const reqComments = request ? request.__comments : {}
-          const reqText = reqDesc ? stringify(reqDesc, reqComments, reqCommentRoot) : ''
+          const reqComments = reqType ? reqType.__comments__ : {}
+          const reqText = reqDesc ? stringify(reqDesc, reqComments) : ''
 
-          const resPattern = getResponseType ? getResponseType(response) : response
-          const resType = resPattern ? Ty.create(resPattern) : null
+          const resType = this.parser.parse(response)
           const resDesc = resType ? this.parser.describe(resType) : null
-          const resCommentRoot = getResponseType ? getPath(getResponseType(RANDOM), RANDOM) : ''
-          const resComments = response ? response.__comments : {}
-          const resText = resDesc ? stringify(resDesc, resComments, resCommentRoot) : ''
+          const resComments = resType ? resType.__comments__ : {}
+          const resText = resDesc ? stringify(resDesc, resComments) : ''
 
-          const errPattern = getErrorType ? getErrorType('message') : null
-          const errType = errPattern ? Ty.create(errPattern) : null
+          const errType = error ? this.parser.parse(error) : null
           const errDesc = errType ? this.parser.describe(errType) : null
           const errText = errDesc ? stringify(errDesc) : ''
 
-          const errorsMappingText = stringify({
-            ...globalErrorMapping,
-            ...errorMapping,
-          })
+          const errorMappingText = stringify(errorMapping)
 
-          const url = (basePath ? basePath : '') + path
+          const url = (base ? base : '') + path
 
           return {
             name,
@@ -212,7 +230,7 @@ class Service {
             request: reqText,
             response: resText,
             error: errText,
-            errors: errorsMappingText,
+            errors: errorMappingText,
           }
         }),
       }
@@ -221,8 +239,7 @@ class Service {
     app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.js')))
     app.use('/darkmode.js', express.static(path.resolve(__dirname, 'node_modules/darkmode-js/lib/darkmode-js.min.js')))
     app.use(root, (req, res) => {
-      const { docTemplateFile = path.resolve(__dirname, 'doc.html') } = this.options
-      fs.readFile(docTemplateFile, (error, buffer) => {
+      fs.readFile(template, (error, buffer) => {
         let text = buffer.toString()
         text = text.replace(/__TITLE__/g, title)
         text = text.replace(/__DESCRIPTION__/g, description)
@@ -232,18 +249,14 @@ class Service {
       })
     })
     if (port) {
-      app.listen(port)
+      app.listen(port, () => console.log('http://localhost:' + port))
     }
   }
 
-  test(testServerConfig = {}, server) {
+  test(testServerConfig, server) {
     const {
-      basePath: globalBasePath,
-      getResponseType: globalGetResponseType,
-      getRequestType: globalGetRequestType,
-      getErrorType: globalGetErrorType,
-      errorMapping: globalErrorMapping = {},
-      data,
+      base: globalBasePath,
+      errorMapping,
     } = this.options
 
     const {
@@ -252,30 +265,27 @@ class Service {
       title = 'TySheMo',
       description = 'This is an api doc generated by TySheMo.',
       root = '/',
-      testTemplateFile = path.resolve(__dirname, 'test.html'),
-    } = testServerConfig
+      template = path.resolve(__dirname, 'test.html'),
+    } = testServerConfig || this.configs.test || {}
+
     const app = server || express()
 
-    const makeRequest = (req, reqMock, reqPatchPath) => {
-      if (!req) {
+    const makeRequest = (request, reqMock) => {
+      if (!request) {
         return reqMock
       }
-      const clonedDesc = clone(reqMock)
-      const originalReq = clonedDesc ? parse(clonedDesc, reqPatchPath) : null
-      if (isObject(originalReq) && isObject(req)) {
-        Object.assign(originalReq, req)
-      }
-      else {
-        assign(clonedDesc, reqPatchPath, req)
-      }
-      return clonedDesc
+
+      const cloned = clone(reqMock)
+      extend(cloned, request)
+      return cloned
     }
+
     const getHash = (group, item, unit) => {
       return getObjectHash({ group: group.name, item: item.name, unit: unit.name })
     }
 
     app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.min.js')))
-    app.use('/tyshemo.js', express.static(path.resolve(__dirname, 'node_modules/tyshemo-x/tyshemo-x.js')))
+    app.use('/tyshemo.js', express.static(path.resolve(__dirname, 'node_modules/tyshemo/dist/tyshemo.min.js')))
     app.use('/indb.js', express.static(path.resolve(__dirname, 'node_modules/indb/dist/indb.js')))
     app.use('/__request_mock_data__/:hash', (req, res) => {
       const { hash } = req.params
@@ -310,14 +320,12 @@ class Service {
             continue
           }
 
-          const { request, getRequestType = globalGetRequestType } = item
-          const reqPattern = getRequestType ? getRequestType(request) : request
-          const reqType = reqPattern ? Ty.create(reqPattern) : null
+          const { request } = item
+          const reqType = request ? this.parser.parse(request) : null
           const reqMock = reqType ? this.mocker.mock(reqType) : null
-          const reqPatchPath = getRequestType ? getPath(getRequestType(RANDOM), RANDOM) : ''
           const { request: _request = {} } = unit
 
-          requestData = makeRequest(_request, reqMock, reqPatchPath)
+          requestData = makeRequest(_request, reqMock)
         }
       }
 
@@ -356,29 +364,22 @@ class Service {
           items: group.items.map((item) => {
             const {
               name,
-              description,
               method,
               path,
               request,
               response,
-              basePath = globalBasePath,
-              getResponseType = globalGetResponseType,
-              getRequestType = globalGetRequestType,
-              getErrorType = globalGetErrorType,
-              errorMapping = {},
+              base = globalBasePath,
             } = item
 
             if (!item.test && !isArray(item.test)) {
               return
             }
 
-            const reqPattern = getRequestType ? getRequestType(request) : request
-            const reqType = reqPattern ? Ty.create(reqPattern) : null
+            const reqType = this.parser.parse(request)
 
-            const url = (basePath ? basePath : '') + path
+            const url = (base ? base : '') + path
             const makeResponse = (res) => {
-              const resPattern = getResponseType ? getResponseType(res) : res
-              const resType = resPattern ? Ty.create(resPattern) : null
+              const resType = this.parser.parse(res)
               const resDesc = resType ? this.parser.describe(resType) : null
               return resDesc
             }
@@ -387,7 +388,6 @@ class Service {
             const units = []
             item.test.forEach((testUnit, i) => {
               const reqMock = reqType ? this.mocker.mock(reqType) : null
-              const reqPatchPath = getRequestType ? getPath(getRequestType(RANDOM), RANDOM) : ''
               const { params = {}, request = {}, response, frequency, name } = testUnit
               const path = createUrl(url, params)
               const unit = {
@@ -395,7 +395,7 @@ class Service {
                 frequency,
                 method,
                 path,
-                request: makeRequest(request, reqMock, reqPatchPath),
+                request: makeRequest(request, reqMock),
                 response: response ? makeResponse(response) : resDesc,
               }
               unit.hash = getHash(group, item, unit)
@@ -412,7 +412,7 @@ class Service {
         }
       }).filter(item => !!item)
 
-      fs.readFile(testTemplateFile, (error, buffer) => {
+      fs.readFile(template, (error, buffer) => {
         let text = buffer.toString()
         text = text.replace(/__TITLE__/g, title)
         text = text.replace(/__DESCRIPTION__/g, description)
@@ -428,23 +428,35 @@ class Service {
       }))
     }
     if (port) {
-      app.listen(port)
+      app.listen(port, () => console.log('http://localhost:' + port))
     }
   }
-  serve(serverConfig = {}) {
-    const { port = 8089, docRoot = '/', testRoot = '/_test' } = serverConfig
-    const config = {
-      ...serverConfig,
-      port: false,
-      target: false,
-    }
+
+  serve() {
+    const setting = this.configs
+    const { doc = {}, test = {}, mock = {} } = setting
+    const { port = 8089 } = setting
+    const { root: docRoot = '/' } = doc
+    const { root: testRoot } = test
+    const testingRoot = !testRoot || testRoot === docRoot ? '/_test' : testRoot
 
     const app = express()
-    this.mock(config, app)
-    this.test({ ...config, root: testRoot }, app)
-    this.doc({ ...config, root: docRoot }, app)
+    this.mock({
+      ...mock,
+      port: false,
+    }, app)
+    this.test({
+      ...test,
+      root: testingRoot,
+      port: false,
+    }, app)
+    this.doc({
+      ...doc,
+      root: docRoot,
+      port: false,
+    }, app)
 
-    app.listen(port)
+    app.listen(port, () => console.log('http://localhost:' + port))
   }
 }
 

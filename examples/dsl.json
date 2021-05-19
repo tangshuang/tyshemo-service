@@ -1,0 +1,83 @@
+{
+  "base": "/api/v2",
+  "data": [
+    {
+      "id": "default_group",
+      "name": "Default Group",
+      "items": [
+        {
+          "name": "Desk",
+          "method": "get",
+          "path": "/desk/:id",
+          "response": {
+            "code": 0,
+            "data": {
+              "title": "string",
+              "size": "number"
+            }
+          },
+          "mock": {
+            "data.height": 120
+          }
+        },
+        {
+          "name": "Person",
+          "method": "post",
+          "path": "/person/:id",
+          "request": {
+            "name": "string8",
+            "age": "numeric"
+          },
+          "response": {
+            "code": 0,
+            "data": {
+              "#name": "姓名",
+              "name": "string8",
+              "age": "?int",
+              "body": {
+                "head": "boolean",
+                "foot": "boolean"
+              },
+              "hands": [
+                {
+                  "name": "string8",
+                  "size": "number"
+                }
+              ]
+            }
+          },
+          "error": {
+            "code": "error_code",
+            "error": "error_message",
+            "data": null
+          },
+          "test": [
+            {
+              "frequency": 60000,
+              "name": "123",
+              "params": {
+                "id": 123
+              },
+              "request": {
+                "age": "10"
+              }
+            },
+            {
+              "name": "111",
+              "params": {
+                "id": 111
+              }
+            }
+          ],
+          "mock": {
+            "data.body.neck": true
+          }
+        }
+      ]
+    }
+  ],
+  "errorMapping": {
+    "10000": "Database broken",
+    "10005": "network error"
+  }
+}

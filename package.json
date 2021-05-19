@@ -6,7 +6,7 @@
   "scripts": {
     "doc": "nodemon examples/doc.js",
     "mock": "nodemon examples/mock.js",
-    "test": "nodemon examples/test.js",
+    "testing": "nodemon examples/test.js",
     "start": "nodemon examples/serve.js"
   },
   "author": "",
@@ -15,12 +15,15 @@
     "darkmode-js": "^1.5.6",
     "express": "^4.17.1",
     "http-proxy-middleware": "^1.0.4",
-    "indb": "^3.1.1",
-    "ts-fns": "^6.4.5",
-    "tyshemo-x": "^4.1.0"
+    "indb": "^3.2.0",
+    "ts-fns": "^10.2.0"
   },
   "devDependencies": {
     "nodemon": "^1.19.4",
+    "tyshemo": "^11.2.8",
     "vue": "^2.6.11"
+  },
+  "peerDependencies": {
+    "tyshemo": "^11.2.8"
   }
 }
