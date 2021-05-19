@@ -284,9 +284,9 @@ class Service {
       return getObjectHash({ group: group.name, item: item.name, unit: unit.name })
     }
 
-    app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.min.js')))
-    app.use('/tyshemo.js', express.static(path.resolve(__dirname, 'node_modules/tyshemo/dist/tyshemo.min.js')))
-    app.use('/indb.js', express.static(path.resolve(__dirname, 'node_modules/indb/dist/indb.js')))
+    app.use('/vue.js', express.static(require.resolve('vue/dist/vue.min.js')))
+    app.use('/tyshemo.js', express.static(require.resolve('tyshemo/dist/tyshemo.min.js')))
+    app.use('/indb.js', express.static(require.resolve('indb/dist/indb.js')))
     app.use('/__request_mock_data__/:hash', (req, res) => {
       const { hash } = req.params
       const { data } = this
