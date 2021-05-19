@@ -236,8 +236,8 @@ class Service {
       }
     })
 
-    app.use('/vue.js', express.static(path.resolve(__dirname, 'node_modules/vue/dist/vue.js')))
-    app.use('/darkmode.js', express.static(path.resolve(__dirname, 'node_modules/darkmode-js/lib/darkmode-js.min.js')))
+    app.use('/vue.js', express.static(require.resolve('vue/dist/vue.js')))
+    app.use('/darkmode.js', express.static(require.resolve('darkmode-js/lib/darkmode-js.min.js')))
     app.use(root, (req, res) => {
       fs.readFile(template, (error, buffer) => {
         let text = buffer.toString()
