@@ -24,6 +24,7 @@
     "vue": "^2.6.11"
   },
   "peerDependencies": {
-    "tyshemo": "^11.2.8"
+    "tyshemo": "^11.2.8",
+    "vue": "^2.6.11"
   }
 }
