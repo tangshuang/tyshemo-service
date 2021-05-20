@@ -305,12 +305,13 @@ class Service {
             count ++
           }
         })
+
         if (!count) {
           continue
         }
 
         for (let i = 0, len = items.length; i < len; i ++) {
-          const item = items[0]
+          const item = items[i]
           if (!item.test || !item.test.length) {
             continue
           }
@@ -333,7 +334,7 @@ class Service {
         res.json(requestData)
       }
       else {
-        const message = 'Not found unit by this hash.'
+        const message = 'Not found unit by this hash:' + hash
         res.writeHead(404, message, { 'content-type' : 'text/plain' })
         res.end(message)
       }
