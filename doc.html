@@ -146,7 +146,7 @@ aside .darkmode {
         <div class="value">{{current.method}}</div>
       </section>
       <section class="request">
-        <div class="label">REQUEST</div>
+        <div class="label">{{current.method === 'get' ? 'QUERY' : 'REQUEST'}}</div>
         <div class="value">
           <div class="text-line" v-for="item in split(current.request)" :key="item.text" :class="{ 'text-comment': item.is, 'text-normal': !item.is }">{{item.text}}</div>
         </div>

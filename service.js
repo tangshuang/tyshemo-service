@@ -53,7 +53,8 @@ class Service {
     } = this.options
 
     const {
-      port = 7000
+      port = 7000,
+      transformer,
     } = mockServerConfig || this.configs.mock || {}
 
     items.forEach((item) => {
@@ -159,6 +160,10 @@ class Service {
               replace(keyPath, value)
             }
           })
+        }
+
+        if (transformer) {
+          transformer(data)
         }
 
         res.json(data)
