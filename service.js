@@ -170,7 +170,8 @@ class Service {
       })
     })
     if (port) {
-      app.listen(port, () => console.log('http://localhost:' + port))
+      const server = app.listen(port, () => console.log('http://localhost:' + port))
+      return () => server.close()
     }
   }
 
@@ -254,7 +255,8 @@ class Service {
       })
     })
     if (port) {
-      app.listen(port, () => console.log('http://localhost:' + port))
+      const server = app.listen(port, () => console.log('http://localhost:' + port))
+      return () => server.close()
     }
   }
 
@@ -434,7 +436,8 @@ class Service {
       }))
     }
     if (port) {
-      app.listen(port, () => console.log('http://localhost:' + port))
+      const server = app.listen(port, () => console.log('http://localhost:' + port))
+      return () => server.close()
     }
   }
 
@@ -463,7 +466,8 @@ class Service {
       port: false,
     }, app)
 
-    app.listen(port, () => console.log('http://localhost:' + port))
+    const server = app.listen(port, () => console.log('http://localhost:' + port))
+    return () => server.close()
   }
 }
 
