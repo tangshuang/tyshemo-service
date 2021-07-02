@@ -31,9 +31,16 @@
           "response": {
             "code": 0,
             "data": {
-              "#name": "姓名",
+              "#name": [
+                "姓名",
+                "字符串"
+              ],
               "name": "string8",
-              "age": "?int",
+              "#age": [
+                "年龄",
+                "必须是整数"
+              ],
+              "age?": "int",
               "body": {
                 "head": "boolean",
                 "foot": "boolean"
